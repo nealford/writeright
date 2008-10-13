@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                      "http://www.docbook.org/xml/4.4/docbookx.dtd">
+
+<chapter id="chap.automation">
+  <title>Automation</title>
+  
+<para>
+I was working on a project that required updating several spreadsheets on a regular basis. I wanted to open Excel with several at a time, but doing it by hand is a waste of time (and Excel won't allow you to pass multiple files on a command line). So, I spent a little time to write the following little Ruby script:
+</para>
+
+<!-- code file="daily_logs.rb" lang="ruby" -->
+
+<para>
+Even though it didn't take long to open the files by hand, the little time it took was a waste of time, so I automated it. Along the way, I discovered that you can use Ruby on Windows to drive <acronym>COM</acronym> objects, like Excel.
+</para>
+
+<para>
+Computers are designed to perform simple, repetitive tasks over and over really fast. Yet an odd thing has happened: people are performing simple, repetitive tasks by hand on computers. And the computers get together late at night and make fun of their users. Why is that? Graphical environments are designed to help novices. The reason that Microsoft chose the name "Start"  for the button in Windows was because users had a hard time in previous versions knowing what to do first. In a stranger-than-fiction ironic twist, the way you shut down the computer is by using the "Start"  button. But the very things that make casual users more productive hamper power users. You can get more done at the command line faster for most development chores than you can through a graphical user interface. One of the great ironies of the last couple of decades is that power users have gotten slower at performing routine tasks. The typical Unix guys of yore were much more efficient because they automated <emphasis>everything</emphasis>.
+</para>
+
+<para>
+If you've ever been to an experienced woodworker's shop, you see lots of specialized tools laying around (you may not have even realized that a laser guided, gyroscopically balanced lathe existed). Yet in the course of most projects, woodworkers use a little scrap of wood from the floor to hold two things apart temporarily or hold two things together. In engineering terms, these little scraps are "jigs" or "shims". As developers, we create too few of these little throwaway tools, frequently because we don't think of tools in this way.
+</para>
+<para>
+Software development has lots of obvious automation targets: builds, continuous integration, and documentation. This chapter covers some less obvious but no less valuable ways to automate development chores, from the single keystroke all the way to little applications. 
+</para>
+
+
+<sect1 id="sct.buildix"><title>Don't Reinvent Wheels</title>
+<para>
+  General infrastructure setup is a common problem every project faces: setting up version control, continuous integration, user ID's, etc. <firstterm>Buildix</firstterm><footnote><para>Download at <uri>http://buildix.thoughtworks.com/</uri></para></footnote> is an open source project (developed by ThoughtWorks) that simplifies this process greatly for Java-based projects. Many Linux distributions come with a "Live CD" option, allowing you to boot right off the <acronym>CD</acronym> to try out a version of Linux. Buildix works the same way, but with pre-configured project infrastructure. It is itself a Ubuntu Live <acronym>CD</acronym>, but with software development goodies pre-installed. Buildix includes the following pre-configured infrastructure:
+</para>
+<orderedlist>
+<listitem><para>Subversion, the popular open source version control package</para></listitem>
+<listitem><para>CruiseControl, the open source continuous integration server</para></listitem>
+<listitem><para>Trac, the open source bug tracking and wiki</para></listitem>
+<listitem><para>Mingle, ThoughtWorks agile project tracking tool </para></listitem>
+</orderedlist>
+<para>
+You boot from the Buildix CD and you have project infrastructure. Or, you can use the Live CD as an installation CD for an existing Ubuntu system. It's a project in a box.
+</para>
+</sect1>
+
+<sect1><title>Cache Stuff Locally</title>
+<para>
+When you develop software, you constantly refer to resources on the Internet. No matter how fast your network connection, you still pay a speed penalty when you view pages via the web. For oft referenced material (like programming APIs), you should cache the content locally (which also lets you access it on airplanes). Some content is easy to cache locally: just use your browser's "Save Page" feature. Lots of times, however, it gets an incomplete set of web pages.
+</para>
+
+<para>
+<command>wget</command> is a *-nix utility designed to get parts of the web locally. It is available on all the *-nixes and as part of Cygwin on Windows. <command>wget</command> has lots of options to fetch pages. The most common is <command>mirror</command>, which mirrors the entire site locally. For example, to effectively mirror a web site, issue the following command:
+</para>
+
+<programlisting language="bash"><![CDATA[ 
+wget --mirror –w 2 --html-extension –-convert-links 
+    –P c:\wget_files\example1 http://www.yourdomain.com
+]]></programlisting> 
+
+<para>
+That's a mouth full. Here is a breakdown:
+</para>
+
+<informaltable frame="none">
+    <tgroup cols="2">
+        <tbody>
+            <row>
+                <entry>wget</entry>
+                <entry>The command itself
+                </entry>
+            </row>
+            <row>
+                <entry>--mirror</entry>
+                <entry>Command to mirror the web site. <command>wget</command> will recursively follow links on the site and download all necessary files. By default, it only gets files updated since the last mirror operation to avoid useless work.
+                </entry>
+            </row>
+            <row>
+                <entry>--html-extension</entry>
+                <entry>Lots of web files have non-<acronym>HTML</acronym> extensions even if they ultimately yield HTML files (like <acronym>cgi</acronym>)  or <acronym>PHP</acronym>. This flag tells <command>wget</command> to convert those files to <acronym>HTML</acronym>> extensions.</entry>
+            </row>
+            <row>
+              <entry>--convert-links</entry>
+              <entry>All links on the page are converted to local links, fixing the problem for a page that has absolute <acronym>URI</acronym>'s in them. <command>wget</command> converts all the links to local resources.</entry>
+            </row>  
+            <row>
+              <entry>-P c:\wget_files\example1</entry>
+              <entry>The target directory where you want the site placed locally.
+              </entry>
+            </row>
+        </tbody>
+    </tgroup>
+ </informaltable> 
+
+</sect1>
+
+<sect1>
+<title>Automate Your Interaction with Web Sites</title>
+<para>
+You sometimes have web sites from which you would like to distill information that require logon or other steps to get to content. <command>cURL</command> allows you to automate that interaction. <command>cURL</command> is another open source tool that it available for all the major operating systems. <command>cURL</command> is similar to <command>wget</command> but specializes in interacting with pages to retrieve content or grab resources. For example, say you have the following web form:
+</para>
+
+<programlisting language="html"><![CDATA[ 
+<form method="GET" action="junk.cgi">
+         <input type=text name="birthyear">
+         <input type=submit name=press value="OK">
+</form>
+]]></programlisting>
+
+<para>
+<command>cURL</command> allows you to fetch the page which results after supplying the two parameters:
+</para> 
+
+<programlisting language="bash"><![CDATA[ 
+curl "www.hotmail.com/when/junk.cgi?birthyear=1905&press=OK"
+]]></programlisting> 
+
+<para>
+You can also interact with pages that require an <acronym>HTML</acronym> <command>POST</command> instead of <command>GET</command> using the "-d" command line option:
+</para>
+
+<programlisting language="bash"><![CDATA[ 
+curl -d "birthyear=1905&press=%20OK%20" www.hotmail.com/when/junk.cgi
+]]></programlisting> 
+
+<para>
+<command>cURL</command>'s real sweet spot is interacting with secured sites via a variety of protocols (like <acronym>HTTPS</acronym>). The <acronym>cURL</acronym> web site goes into incredible detail on this subject. This ability to navigate security protocols and other web realities makes <acronym>cURL</acronym> a great tool to interact with sites. It comes be default on Mac OS X and most Linux distributions; you can download a copy for Windows.
+</para>
+
+
+</sect1>
+<sect1>
+<title>Interact with <acronym>RSS</acronym> Feeds</title>
+<para>
+Yahoo has a service (currently and perpetually in beta) called <firstterm>Pipes</firstterm>. Pipes allow you to manipulate <acronym>RSS</acronym> feeds (like blogs), combining, filtering, and processing the results to create either a web page result or another <acronym>RSS</acronym> feed. It uses a web-based drag and drop interface to create "pipes" from one feed to another, borrowing the Unix command line pipe metaphor. From a usability standpoint, it looks much like Mac OS X Automator, where each of the commands (or pipe stages) produces output to be consumed by the next pipe in line.
+</para>
+
+<para>
+For example, the pipe shown in <xref linkend="automation_pipes1" /> fetches the blog aggregator from the No Fluff, Just Stuff conference site that includes recent blog postings. The blog postings occur in the form of "blog author - blog title", and I only want the author in the output. I use the regex pipe to replace the author-title with just the author's name.
+</para>
+
+<figure id="automation_pipes1">
+    <title>No Fluff, Just Stuff Recent Bloggers</title>
+    <mediaobject>
+        <imageobject role="web">
+            <imagedata width="29pc" fileref="figs/web/automation_pipes1.png"/>
+        </imageobject>
+        
+        <imageobject role="print">
+            <imagedata width="29pc" fileref="figs/print/automation_pipes1.pdf"/>
+        </imageobject>
+        
+    </mediaobject>
+</figure>
+
+<para>
+The output of the pipe is either another an <acronym>HTML</acronym> page or another <acronym>RSS</acronym> feed (the pipe is executed whenever you refresh the feed).
+</para>
+
+<para>
+<acronym>RSS</acronym> is an increasingly popular format for developer information, and Yahoo Pipes allow you to programmatically manipulate it to refine the results. Not only that, Pipes is gradually adding support for harvesting information off web pages to put into pipes, allowing you to automate retrieval of all sorts of web-based information.
+</para>
+
+</sect1>
+<sect1>
+<title>Subvert Ant for Non-build Tasks</title>
+<tip>
+<para>
+Use tools out of their original context when appropriate.
+</para>
+</tip>
+<para>
+Batch files and bash scripts allow you to automate work at the operating system level. But both have picky syntax and sometime clumsy commands. For example, if you need to perform an operation on a large number of files, it is difficult to retrieve just the list of files you want using the primitive commands in batch and bash scripts. Why not use tools already designed for this purpose?
+</para>
+
+<para>
+The typical make commands we use now as development tools already know how to grab lists of files, filter them, and perform operations on them. Ant, Nant, and Rake have much friendlier syntax than batch and script files for tasks that must operate on groups of files. 
+</para>
+
+<para>
+Here is an example of subverting Ant to do some work that would be so difficult in a batch file that I would have never done it. I used to teach a lot of programming classes where I wrote samples on the fly as I went. Frequently, because of questions, I would customize the application as we went along. At the end of the week, everyone wanted a copy of the custom applications I had written. But, in the course of writing them, I had lots of extra stuff (output files, <acronym>JAR</acronym> files, temporary files, etc). At the end of the week, I had to clean out all of the extraneous files and create a nice <acronym>ZIP</acronym> archive. Rather than do this by hand, I created an Ant file do to it. The nice part of using Ant was a built-in awareness of a set of files:
+</para>
+
+<programlisting language="xml"><![CDATA[ 
+<target name="clean-all" depends="init">
+    <delete verbose="true" includeEmptyDirs="true">
+    <fileset dir="${clean.dir}">
+        <include name="**/*.war" />
+        <include name="**/*.ear" />
+        <include name="**/*.jar" />
+        <include name="**/*.scc" />
+        <include name="**/vssver.scc" />
+        <include name="**/*.*~" />
+        <include name="**/*.~*~" />
+        <include name="**/*.ser" />
+        <include name="**/*.class" />
+        <containsregexp expression=".*~$" />
+    </fileset>
+    </delete>
+
+    <delete verbose="true" includeEmptyDirs="true" >
+        <fileset dir="${clean.dir}" defaultexcludes="no">
+            <patternset refid="generated-dirs" />
+        </fileset>
+    </delete>
+</target>
+]]></programlisting> 
+
+<para>
+Using Ant allowed me to write a high-level task to perform all the steps I was doing by hand before:
+</para>
+
+<programlisting language="xml"><![CDATA[ 
+<target name="zip-samples" depends="clean-all" >
+    <delete file="${class-zip-name}" />
+    <echo message="Your file name is ${class-zip-name}" />    
+    <zip destfile="${class-zip-name}.zip" basedir="." compress="true" excludes="*.xml,*.zip, *.cmd" />
+</target>
+]]></programlisting> 
+
+<para>
+Writing this as a batch file would have been a nightmare! Even writing it in Java would be cumbersome: Java has no built-in awareness of a set of files matching patterns. When using build tools, you don't have to create a <code>main</code> method or any of the other infrastructure already supplied by the build tools.
+</para>
+<para>
+The worst thing about Ant is the reliance on <acronym>XML</acronym>, which is hard to write, hard to read, hard to refactor, and hard to diff. A nice alternative is Gant<footnote><para>Download at <uri>http://gant.codehaus.org/</uri></para></footnote>. It provides the ability to interact with existing Ant tasks, but you write your build files in Groovy, meaning that you are now in a real programming language. 
+</para>
+</sect1>
+
+<sect1 id="sect.rake">
+  <title>Subvert Rake for Common Tasks</title>
+<para>
+Rake is the make utility for Ruby (written in Ruby). Rake makes a great shell script substitute because it gives you the full expressive power of Ruby but allows you to easily interact with the operating system.
+</para>
+
+<para>
+Here's an example that I use all the time. I do lots of presentations at developer's conferences, which means that I have lots of slide decks and corresponding example code. For a long time, I would launch the presentation, then remember all the other tools and samples I would have to launch. Inevitably, I would forget one and have to fumble around during the talk to find the missing sample. Then I wised up and automated the process.
+</para>
+
+<programlisting language="ruby"><![CDATA[require File.dirname(__FILE__) + '/../base'
+TARGET = File.dirname(__FILE__)
+
+FILES = [
+  "#{PRESENTATIONS}/building_dsls.key",
+  "#{DEV}/java/intellij/conf_dsl_builder/conf_dsl_builder.ipr",
+  "#{DEV}/java/intellij/conf_dsl_logging/conf_dsl_logging.ipr",
+  "#{DEV}/java/intellij/conf_dsl_calendar_stopping/conf_dsl_calendar_stopping.ipr",
+  "#{DEV}/thoughtworks/rbs/intarch/common/common.ipr"
+]
+
+APPS = [
+  "#{TEXTMATE} #{GROOVY}/dsls/",
+  "#{TEXTMATE} #{RUBY}/conf_dsl_calendar/",
+  "#{TEXTMATE} #{RUBY}/conf_dsl_context"
+]]]></programlisting>
+
+<para>
+This rake file lists all the files that I need to open and all the applications required for the talk. One of the nice things about Rake is its ability to use Ruby files as helpers. This rake file is essentially just declarations. The actual work is done in a base rake file called "base", which all the individual rake files rely upon:
+</para>
+
+<programlisting language="ruby"><![CDATA[require 'rake'
+require File.dirname(__FILE__) + '/locations'
+require File.dirname(__FILE__) + '/talks_helper'
+
+task :open do
+  TalksHelper.new(FILES, APPS).open_everything
+end
+
+]]></programlisting>
+<para>
+Notice at the top of the file I require a file named <filename>talks_helper</filename>:
+</para>
+
+<programlisting language="ruby"><![CDATA[class TalksHelper
+  attr_writer :openers, :processes
+  
+  def initialize(openers, processes)
+    @openers, @processes = openers, processes
+  end
+  
+  def open_everything
+    @openers.each { |f| `open #{f.gsub /\s/, '\\ '}` } unless @openers.nil?
+    @processes.each do |p|
+      pid = fork {system p}
+      Process.detach(pid)
+    end unless @processes.nil?
+  end
+end
+]]>  
+</programlisting>
+
+<para>
+This helper class includes the code that does the actual work. This mechanism allows me to have a simple Rakefile per presentation and automatically launch what I need. Rake's great advantage lies in the ease in which you can interact with the underlying operating system. When you delimit strings with the back-tick character (`), it automatically executes it as a shell command. The line of code that includes <code>`open #{f.gsub /\s/, '\\ '}`</code> really executes the <command>open</command> command from the underlying operating system (in this case, Mac OS X -- you can substitute <command>start</command> in Windows), using the variable I have defined above as the argument. Using Ruby to drive the underlying operating system is much easier than writing bash scripts or batch files.
+</para>
+</sect1>
+
+<sect1 id="sct.Selenium"><title>Subverting Selenium to Walk Web Pages</title>
+<para>
+Selenium<footnote><para>Download at <uri>http://www.openqa.org</uri>
+</para></footnote> is an open source user acceptance testing tool for web applications. It allows you to simulate user actions by automating the browser via JavaScript. Selenium is written entirely in browser technology, so it runs in all mainstream browsers. It is an incredibly useful tool for testing web applications, regardless of the technology used to create the web application.
+</para>
+
+<para>
+But I'm not here to talk about using Selenium as a testing tool. One of the ancillary projects to Selenium is a Firefox browser plug-in called <emphasis>Selenium IDE</emphasis>. Selenium IDE allows you to record your interaction with a web application as a Selenium script, which you can playback through Selenium's TestRunner or through the Selenium IDE itself. While this is useful when creating tests, it is invaluable if you need to automate your interaction with a web application.
+</para>
+
+<para>
+Here is a common scenario. You are building the fourth page of a wizard-style web application. The first three pages are complete, meaning that all their interaction works correctlying (including things like validations). To debug the behavior of the fourth page, you must walk through the first three pages over and over. And over. And over. You always think "OK, this will be the last time I have to walk through these pages because I'm sure I've fixed the bug this time." But it's never the last time! This is why your test database has lots of entries for Fred Flintstone, Homer Simpson, and that ASDF guy.
+</para>
+<para>
+Use Selenium IDE to do the walking for you. The first time you need to walk the application to get to the fourth page, record it using the Selenium IDE, which will look a lot like <xref linkend="automation-Selenium-ide" />. Now, the next time you have to walk to the fourth page, with valid values in each field, just play back the Selenium script.
+</para>
+<figure id="automation-Selenium-ide">
+    <title>Selenium IDE with a Script Ready to Run</title>
+    <mediaobject>
+        <imageobject role="web">
+            <imagedata width="29pc" fileref="figs/web/automation-Selenium-ide.png"/>
+        </imageobject>
+        
+        <imageobject role="print">
+            <imagedata width="29pc" fileref="figs/print/automation-Selenium-ide.pdf"/>
+        </imageobject>
+        
+    </mediaobject>
+</figure>
+
+<para>
+Another great developer use for Selenium pops up as well. When your <acronym>QA</acronym> department finds a bug, they generally have some primitive way of reporting how the bug came about: a partial list of what they did, a fuzzy screen shot, or something similarly unhelpful. Have them record their bug discovery missions with Selenium IDE and report back to you. Now, you can automatically walk through the exact scenario they did, over and over, until you fix the bug. This saves both time and frustration. Selenium has essentially created an executable description of user interaction with a web application. Use it!
+</para>
+
+<tip><para>
+Don't spend time doing by hand what you can automate.
+</para></tip>
+</sect1>
+
+<sect1><title>Using Bash to Harvest Exception Counts</title>
+<para>
+Here's an example of using bash that you might run into on a typical project. 
+</para>
+
+<para>
+I was on a large Java project that had gone on for 6 years (I was just a tourist on this project, arriving in the 6th year for about 8 months). One of the chores that fell to me was to clean up some of the exceptions that occurred on a regular basis. The first thing I did was ask "What exceptions are being thrown and at what frequency?"  Of course, no one knew, so my first task was to answer that question.
+</para>
+<para>
+The problem was that this application excreted 2 Gb worth of logs each and every week, containing the exceptions I needed to categorize, along with a huge amount of other noise. It didn't take me long to realize that it was a waste of time to crack open this file with a text editor. So, I sat down for a little while and ended up with this:
+</para>
+
+<programlisting language="bash"><![CDATA[
+#!/bin/bash
+
+for X in $(egrep -o "[A-Z]\w*Exception" log_week.txt | sort | uniq) ; 
+do
+    echo -n -e "processing $X\t"
+    grep -c "$X" log_week.txt
+done
+]]></programlisting>
+
+<para>
+This handy little bash script does the following:
+</para>
+
+<informaltable frame="none">
+ <tgroup cols="2">
+  <tbody>
+    <row>
+      <entry><code>egrep -o</code></entry>
+      <entry>Find all strings in the log file that have some text before "Exception" , sort them, and get a distinct list</entry>
+    </row>
+    <row>
+      <entry>"[A-Z]\w*Exception"</entry>
+      <entry>The pattern that defines what an exception looks like</entry>
+    </row>
+    <row>
+      <entry>log_week.txt</entry>
+      <entry>the gargantuan log file</entry>
+    </row>
+    <row>
+      <entry>| sort</entry>
+      <entry>Pipe the results through sort, creating a sorted list of the exceptions</entry>
+    </row>
+    <row>
+      <entry>| uniq</entry>
+      <entry>Eliminate duplicate exceptions</entry>
+    </row>
+    <row>
+      <entry><code>for X in $(. . .) ;</code></entry>
+      <entry>Perform the code in the loop for each of the list of exceptions generated above</entry>
+    </row>
+    <row>
+      <entry><code>echo -n -e "processing $X\t"</code></entry>
+      <entry>Echo to the console which exception I'm harvesting (so I can tell it's working)</entry>
+    </row>
+    <row>
+      <entry><code>grep -c "$X" log_week.txt</code></entry>
+      <entry>Find the count of this exception in the giant log file</entry>
+    </row>
+  </tbody>
+ </tgroup>
+</informaltable>
+
+<para>
+They still use this little utility on the project. It's a good example of a way to automate the creation of a valuable piece of project information that no one had taken the time to do before now. Instead of wondering and speculating about the types of exceptions being thrown, we can now look and find out exactly, making our targeted fixing of the exceptions much easier.
+</para>
+</sect1>
+<sect1><title>Replace Batch Files with Windows Power Shell</title>
+<para>
+As part of the work on the Vista release of Windows, Microsoft significantly upgraded the batch language. The code name was <firstterm>Monad</firstterm>, but when it shipped it became <firstterm>Windows Power Shell</firstterm>(just for the sake of the extra trees required to spell it out every time, I'm just going to keep calling it "Monad"). It is built into Windows Vista, but you can also use it on Windows XP by just downloading it from the Microsoft website. 
+</para>
+
+<para>
+Monad borrows much of its philosophy from similar command shell languages like bash and DOS, where you can pipe the output of one command into another. The big difference is that Monad doesn't use plain text (like bash), it uses objects. Monad commands (called <firstterm>cmdlets</firstterm>) understand a common set of objects that represent operating system constructs, like files, directories, even things like the Windows event viewer. The semantics of using it work the same as bash (the pipe operator is even the same old <code>|</code> symbol) but the capabilities are vast.
+</para>
+<para>
+Here's an example. Say that you wanted to copy all the files that were updated since December 1, 2006 to a folder named <filename>DestFolder</filename>. The Monad command to do this looks like this:
+</para>
+
+<programlisting language="session"><![CDATA[
+  dir | where-object { $_.LastWriteTime -gt "12/1/2006" } |
+      move-item -destination c:\DestFolder
+]]></programlisting>
+<para>
+Because Monad cmdlets "understand" other cmdlets and the kinds of things they output, you can write scripts much more succinctly than with other scripting languages. Here's an example. Let's say that you needed to kill all processes using more than 15Mb of memory using bash:
+</para>
+<programlisting language="session"><![CDATA[
+ps -el | awk '{ if ( $6 > (1024*15)) { print $3 } }' 
+  | grep -v PID | xargs kill
+]]></programlisting>
+
+<para>
+Pretty ugly! It uses 5 different bash commands, including <command>AWK</command> to parse out the results of the <command>ps</command> command. Here is the equivalent Monad command:
+</para>
+<programlisting language="session"><![CDATA[
+get-process | where { $_.VS -gt 15M } | stop-process
+]]></programlisting>
+<para>
+Here, you can use the <command>where</command> command to filter the <command>get-process</command> the output to a certain property (in this case, the VS property, which is the memory size).
+</para>
+<para>
+Monad is written using .NET, which means that you also have access to standard .NET types. String manipulation, which has traditionally been tough in command shells, relies on the <code>String</code> methods in .NET. For example, issuing the following Monad command:
+</para>
+
+<programlisting language="session"><![CDATA[
+get-member -input "String" -membertype method
+]]></programlisting>
+<para>
+outputs all the methods of the <code>String</code> class. This is similar to using the <command>man</command> utility in *-nix.
+</para>
+
+<para>
+Monad is a huge improvement over what came before in the Windows world. It offers first class programming at the operating system level. Many of the chores that forced developers to resort to scripting languages like Perl, Python, and Ruby before can now be easily done in Monad. Because it is part of the core of the operating system, system-specific objects (like the event viewer) can be queried and manipulated.
+</para>
+</sect1>
+<sect1><title>Use Mac OS X Automator to Delete Old Downloads</title>
+<para>
+Mac OS X has a graphical way of writing batch files called <firstterm>Automator</firstterm>; in many ways, it is a graphical version of Monad even though it predates Monad by several years. To create Automator workflows (Mac OS X's version of a script), you drag application command from Automator's work area and "wire" together the output of one command the the input of another. Each application registers its capabilities with Automator upon installation.  You can also write pieces of Automator in ObjectiveC (which is the underlying development language of Mac OS X) to extend it).
+</para>
+
+<para>
+Here is an example workflow that implements the "delete old downloads" task from above, implemented with Automator, shown in 
+<xref linkend="automation_automator_downloads" />.
+</para>
+
+<figure id="automation_automator_downloads">
+    <title>Mac OS X Automator's Delete Old Downloads Workflow</title>
+    <mediaobject>
+        <imageobject role="web">
+            <imagedata width="29pc" fileref="figs/web/automation_automator_downloads.png"/>
+        </imageobject>
+        
+        <imageobject role="print">
+            <imagedata width="29pc" fileref="figs/print/automation_automator_downloads.pdf"/>
+        </imageobject>
+        
+    </mediaobject>
+</figure>
+
+<para>
+This workflow consists of the following commands:
+</para>
+
+<itemizedlist>
+  <listitem><para>This workflow caches the last 2 weeks of downloads in a folder called <filename>recent</filename>. The first step is to empty <filename>recent</filename>, ready for new files.</para></listitem>
+  <listitem><para>Find all the downloads with a modified date within the last 2 weeks.</para></listitem>
+  <listitem><para>Move them to <filename>recent</filename></para></listitem>
+  <listitem><para>Find all the non-folders in the <filename>downloads</filename> directory</para></listitem>
+  <listitem><para>Delete all the files.</para></listitem>
+</itemizedlist>
+
+<para>
+This workflow does more work than the Monad script above because there is no easy way in the workflow to specify that you want all the files <emphasis>not</emphasis> modified in the last 2 weeks. The best solution is to grab the ones that have, move them out of the way to a cache directory (named <filename>recent</filename>), and delete all the files in <filename>downloads</filename>. You would never bother to do this by hand, but since it's an automated utility, it can do extra work if it must. One alternative would be to write a shell script in bash and incorporate it into the workflow (one of the options is to call a bash script), but then I'm back to parsing out the results of a shell script to harvest the names. If I wanted to go that far, I could do the whole thing as a shell script.
+</para>
+</sect1>
+<sect1 id="sct.taming_svn"><title>Taming Command Line Subversion</title>
+
+<para>
+Eventually, you get to the point where you can't subvert another tool or find an open source project that does just what you want. That means it's time to build your own little jig or shim. This chapter contains lots of different ways to build tools; here are some examples of using these tools to solve problems on real projects.
+</para>
+
+<para>
+I'm a big fans of the open source version control system Subversion. It is just the right combination of power, simplicity, and ease of use. Subversion is ultimately a command line version control system, but lots of developers have created front ends for it (our favorite is the Tortoise integration with Windows Explorer). However, the real power of Subversion lies at the command line. Here is an example.
+</para>
+
+<para>
+I tend to add files in small batches to Subversion. To use the command line tool, you must specify each of the file names you want to add. This isn't bad if you just have a few files, but if you've added 20 files, it is cumbersome. You can use wildcards, but you'll likely grab files that are already in version control (which doesn't hurt anything, but you get piles of error messages that might obscure other error messages). To solve this problem, I wrote a little one-line bash command to handle this:
+</para>
+
+<programlisting language="session"><![CDATA[ 
+ svn st | grep '^\?' | tr '^\?' ' ' | 
+   sed 's/[ ]*//' | sed 's/[ ]/\\ /g' | xargs svn add
+]]></programlisting> 
+
+<para>
+Here is what this one-liner does:
+</para>
+
+<informaltable frame="none">
+ <tgroup cols="2">
+  <thead>
+    <row>
+      <entry>Command</entry>
+      <entry>Result</entry>
+    </row>
+  </thead> 
+  <tbody>
+    <row>
+      <entry>svn st</entry>
+      <entry>Get Subversion status on all files in this directory and all its subdirectories. The new ones come back with a "?"  at the first and a tab before the file name.</entry>
+    </row>
+    <row>
+      <entry>grep '^\?'</entry>
+      <entry>Find all the lines that start with the "?" </entry>
+    </row>
+    <row>
+      <entry>tr '^\?' ' '</entry>
+      <entry>Replace the ? with a space (the <command>tr</command> command translates one character for another).</entry>
+    </row>
+    <row>
+      <entry>sed 's/[ ]*//'</entry>
+      <entry>Using <command>sed</command>, the stream based editor, substitute spaces to nothing for the leading part of the line.</entry>
+    </row>
+    <row>
+      <entry>sed 's/[ ]/\\ /g'</entry>
+      <entry>The filenames may have embedded spaces, so use <command>sed</command> again to substitute any remaining spaces with the escaped space character (a space with a "\"  in front)</entry>
+    </row>
+    <row>
+      <entry>xargs svn add</entry>
+      <entry>Take the resulting lines and pump them into the <command>svn add</command> command</entry>
+    </row>
+    
+  </tbody>
+ </tgroup>
+</informaltable>
+
+
+<para>
+This command line took the better part of 15 minutes to implement, but I've used this little shim (or is it a jig?) hundreds of times since.
+</para>
+
+
+</sect1>
+<sect1 id="sect.sql_splitter"><title>Building a SQL Splitter in Ruby</title>
+<para>
+A coworker and I were working on an project where we needed to be able to parse a large (38,000 line) legacy <acronym>SQL</acronym> file. To make the parsing job easier, we wanted to break the monolithic file into smaller chunks of about 1000 lines each. We thought very briefly about doing it by hand, but decided that automating it would be better. We thought about trying to do this with <command>sed</command>, but it looked like it would be complicated. We eventually settled on Ruby, and about a hour later, we had this:
+</para> 
+
+<programlisting language="ruby" ><![CDATA[SQL_FILE = "./GeneratedTestData.sql"
+OUTPUT_PATH = "./chunks of sql/"
+
+line_num = 1
+file_num = 0
+Dir.mkdir(OUTPUT_PATH) unless File.exists? OUTPUT_PATH
+file = File.new(OUTPUT_PATH + "chunk " + file_num.to_s + ".sql",
+    File::CREAT|File::TRUNC|File::RDWR, 0644)
+
+done, seen_1k_lines = false
+IO.readlines(SQL_FILE).each do |line|
+  file.puts(line)
+  seen_1k_lines = (line_num % 1000 == 0) unless seen_1k_lines
+  line_num += 1
+  done = (line.downcase =~ /^\W*go\W*$/ or 
+         line.downcase =~ /^\W*end\W*$/) != nil
+  if done and seen_1k_lines
+    file_num += 1
+    file = File.new(OUTPUT_PATH + "chunk " + file_num.to_s + ".sql",               
+          File::CREAT|File::TRUNC|File::RDWR, 0644)
+    done, seen_1k_lines = false
+  end
+end]]></programlisting>
+
+<para>
+This little Ruby program reads lines from the original source file until it has read 1000 lines. Then, it starts looking for lines that have either <command>GO</command> or <command>END</command> on them. Once it finds either of those two strings, it finished off the current file and starts another one. 
+</para>
+
+<tip>
+<para>
+Performing simple, repetitive tasks squanders your concentration.
+</para>
+</tip>
+<para>
+We calculated that it probably would have taken us about 10 minutes to break this file up via brute force, and it took about an hour to automate it. We eventually had to do it 5 more times, so we almost reclaimed the time we spent automating it. But that's not the important point. Doing it by hand makes you dumber: performing simple, repetitive tasks by hand steals part of your concentration, which is your most productive asset. 
+</para>
+
+<tip>
+<para>
+Innovative solutions to problems make it easier to solve similar problems in the future.
+</para>
+</tip>
+<para>
+Figuring out a clever way to automate the task makes you smarter because you learn something along the way. One of the reasons it took us so long to complete this Ruby program was unfamiliarity with how Ruby handled low-level file manipulation. Now we know, and we can apply that knowledge to other projects. And, we've figured out how to automate part of our project infrastructure, making it more likely what we'll find other ways to automate simple tasks. 
+</para>
+</sect1>
+
+<sect1>
+  <title>Justifying Automation</title>
+  <para>
+  When you deploy your application, it only takes 3 steps. You must run the "create tables" script on the database, copy the application files to your web server, and update the configuration files for the changes you've made to the routing for your application. Simple, easy steps. And, you have to do this every couple of days. What's the big deal? It only takes about 15 minutes.
+  </para>
+
+  <para>
+What if your project lasts 8 months? That's 64 times you go through this ritual (actually, the pace will pick up as you near the finish line and have to deploy it a lot more often). Add it up: 64 times performing this chore x 15 minutes = 960 minutes = 16 hours = 2 work days. 2 full work days to do the same thing over and over. And this doesn't take into account the number of times you accidentally forget to do one of the steps, which costs more time in debugging and repairing. If it takes you less than 2 days to automate the whole process, then its a no-brainer, because you get pure time savings back. But what if it takes 3 days to automate it -- is it still worth it?
+</para>
+
+<para>
+I have encountered some system administrators that write bash scripts for every task they perform.  They do this for two reasons: first, if you do it once, you're almost certainly going to do it again. Bash commands are very terse by design, and it sometimes takes a few minutes even for an experienced developer to get it right. If you ever have to do that again (and it's very hard to predict), the saved commands save you time that increases every time you reuse one. Second, keeping all the non-trivial command line stuff around in scripts creates living documentation for what you did, and perhaps <emphasis>why</emphasis> you performed some task. Saving everything you do it extreme, but storage is very cheap -- much cheaper than the time it takes to recreate anything non-trivial. Perhaps you can compromise: don't save every single thing you do, but the second time you find yourself doing it, automate it. Chances are excellent that if you do it twice, you'll end up doing it 100 times.
+</para>
+
+<para>
+Virtually everyone on *-nix systems create aliases in their hidden <filename>.bash_profile</filename> configuration file, with commonly used command line shortcuts. Here are a couple of examples, showing the general syntax:
+</para>
+<programlisting language="bash"><![CDATA[
+alias catout='tail -f /Users/nealford/bin/apache-tomcat-6.0.14/logs/catalina.out'
+alias derby='~/bin/db-derby-10.1.3.1-bin/frameworks/embedded/bin/ij.ksh'
+alias mysql='/usr/local/mysql/bin/mysql -u root'
+]]></programlisting>
+
+<para>
+Any frequently used command can appear in this file, freeing you from having to remember some incantation that does some magic. In fact, this ability significantly overlaps that of using key macro tools (see <xref linkend="sct.key_macro_tools" />). I tend to use bash aliases for most things (less overhead with expanding the macro), but one critical category exists for which I use the key macro tools. Any command line you have that contains a mixture of double and single quotes is hard to get escaped exactly right as an alias. The key macro tools handle that much better. For example, the <command>svnAddNew</command> script (shown in <xref linkend="sct.taming_svn" />) started as a bash alias, but it was driving me nuts trying to get all the escaping just right. It now lives as a key macro, and life is much simpler.
+</para>
+
+  <tip>
+  <para>
+  Justifying automation is about return on investment and risk mitigation.
+  </para>
+
+  </tip>
+  
+<para>
+You will see lots of chores in your projects that you would like to automate away. You have to ask yourself the following questions (and be honest with your answers):
+</para>
+  
+<itemizedlist>
+<listitem><para>Will it save time in the long run?</para></listitem>
+<listitem><para>Is it prone to errors (because of lots of complex steps) that will rob time if done incorrectly?</para></listitem>
+<listitem><para>Does this task destroy your focus? Almost any task takes you away from your locus of attention, making it harder to get back to your focus state</para></listitem>
+<listitem><para>What is the hazard of doing it wrong?</para></listitem>
+</itemizedlist>
+
+<para>
+The last question is important because it addresses risk. I was once on a project that, for historical reasons, didn't want to create separate output directories for their code and the tests. To run the tests, we needed to create three difference <code>TestSuite</code>s, one for each kind of test (unit, functional, and integration). The project manager suggested that we just create the test suite by hand. But we decided to take the time to automate its creation via reflection instead. Updating the <code>TestSuite</code> by hand is error prone; it is too easy for a developer to write tests and then forget to update the <code>TestSuite</code>, meaning that his work never gets executed. We deemed the hazard of not automating it as too great.
+</para>
+
+<para>
+One of the things that worries your project manager when you want to automate some task it that it will spiral out of control. We all have the experience of thinking that we can get something done in 2 hours only to have it spiral into 4 days. The best way to mitigate this risk is to <firstterm>timebox</firstterm> your efforts: allocate an exact amount of time for exploration and fact gathering. At the end of the timebox, re-evaluate objectively whether completely pursuing this task is feasible. Timeboxed development is about learning enough to make realistic judgments. At the end of a timebox, it may be that you decided to use another timebox to find out more. I know that the clever automation task is more important than your project work, but be realistic. You boss deserves real estimates.
+</para>
+<tip>
+<para>
+Timebox speculative development.
+</para>
+</tip>
+
+</sect1>
+<sect1>
+  <title>Don't Shave Yaks</title>
+
+<para>
+Finally, don't allow your automation side-project to turn into <firstterm>yak shaving</firstterm>. Yak shaving is part of the official jargon file for computer science. It describes this scenario:
+</para>
+
+<itemizedlist>
+  <listitem><para>You want generate documentation based on your Subversion logs.</para></listitem>
+  <listitem><para>You try to add a Subversion hook only to discover that the Subversion library you have is incompatible and therefore won't work with your web server.</para></listitem>
+  <listitem><para>You start to update your web server, but realize that the version you need isn't supported by the patch level of your operating system, so you start to update your operating system.
+  </para></listitem>
+  <listitem><para>The operating system upgrade has a known issue with the disk array the machine uses for backups.</para></listitem> 
+  <listitem><para>You download an experimental patch for the disk array that should get it to work with your operating system, which works but causes a problem with the video driver.</para></listitem>
+</itemizedlist>
+
+<para>
+At some point, you stop and try to remember what got you started down this road. The reference to yaks and shaving comes from the realization that you are shaving a yak, and you stop to try to figure out what shaving a yak has to do with generating documentation for Subversion logs.
+</para>
+
+<para>
+Yak shaving is dangerous because it eats up a lot of time. It also explains why estimating tasks is so often wrong: just how long does it take to fully shave a yak? Always keep in mind what you are trying to achieve, and pull the plug if it starts to spiral out of control.
+</para>
+
+</sect1>
+<sect1 id="sct.automation-summary"><title>Summary</title>
+<para>
+This chapter contains lots of examples of ways to automate things, but the examples aren't really the important point. They serve to illustrate ways that others and I have figured out how to automate common chores. Computers exist to perform simple, repetitive tasks: put them to work! Notice the repetitive stuff that you do on a daily and weekly basis and ask yourself: can I automate this away? Doing so increases the amount of time you have to spend working on useful problems, not solving the same simple problem over and over. Performing simple tasks by hand robs some of you concentration, so eliminating those little nagging chores frees your precious concentration for other things.
+</para>
+</sect1>
+
+
+</chapter>
+
+

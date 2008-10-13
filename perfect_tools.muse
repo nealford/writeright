@@ -1,0 +1,12 @@
+<ruby>
+require 'writeright'
+title("Find the Perfect Tools")
+</ruby>
+
+Throughout the book thus far, I've shown you examples of using a slew of different tools to solve various problems: batch files, bash scripts (both one-liners and full blown scripts), Windows PowerShell, Ruby, Groovy, sed, awk, and a whole menagerie of big-eyed O'Reilly animals. Now the critical time has come. You've identified a problem that is causing grief and you want to automate it away: which tool do you use? The first tool you'll probably use a a lowly text editor. First, I talk about this perhaps most important tool in your arsenal.
+
+* The Perfect Editor Quest
+
+Developers still spend a lot of time with plain text. No matter how many wizards and other sorcerers we develop, most coding is still in plain text. Most of the information you keep should also reside in plain text (the Pragmatic Programmer admonishes to "Keep knowledge in plain text") because you can never tell if the tool you are using will be around in 5 years. It's a good bet that you'll be able to read plain <acronym>ASCII</acronym> (and probably Unicode) for the next century or so.
+
+
