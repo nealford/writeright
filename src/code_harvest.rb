@@ -1,9 +1,5 @@
 =begin rdoc
 
-Things to consider:
-- what about CDATA around problematic code? Like "<" and "&"
-- - gotta escape it because you can't do CDATA tags AND have call-outs
-- note that imported code may have callouts; I have to provide a syntax for that using <co>. The Prags use regular markup in their comments in the source. I think that's probably OK.
 =end
 
 require File.dirname(__FILE__) +  "/code_metadata"
