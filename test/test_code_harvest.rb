@@ -5,7 +5,8 @@ require 'rubygems'
 
 
 class TestCodeHarvest < Test::Unit::TestCase
-  TEST_DOCS = "./test_docs" 
+  CURRENT_DIR = File.dirname(__FILE__)
+  TEST_DOCS = "#{CURRENT_DIR}/test_docs" 
 
   def setup
     @ch = CodeHarvest.new
@@ -30,13 +31,6 @@ class TestCodeHarvest < Test::Unit::TestCase
     end
   end
 
-  def test_escape_filtering
-    {"for (int i = 0; i < 12; i++)" => "for (int i = 0; i &lt; 12; i++)",
-      "<html><head><title>foo</title></head><body>bar</body></html>" => 
-      "&lt;html&gt;&lt;head&gt;&lt;title&gt;foo&lt;/title&gt;&lt;/head&gt;&lt;body&gt;bar&lt;/body&gt;&lt;/html&gt;"}.each do |k, v|
-      assert_equal v, @ch.send(:filter_escapes, k)
-    end
-  end
 
   def test_gets_simple_parts
     expected = <<END_OF_EXPECTED
@@ -67,55 +61,8 @@ EOF
   end
   
   def test_process_lines_to_insert_simple_code_file_with_no_parts
-    expected = <<EOF
-<para>
-Here's an example that I use all the time.
-</para>
-
-<programlisting language="ruby"><![CDATA[class DailyLogs
-    private 
-    @@Home_Dir = "c:/MyDocuments/Documents/"
-    
-  def doc_list
-    docs = Array.new
-    docs << "Sisyphus Project Planner.xls"
-    docs << "TimeLog.xls"
-    docs << "NFR.xls"
-  end
-
-  def open_daily_logs
-    excel = WIN32OLE.new("excel.application")
-        
-    workbooks = excel.WorkBooks
-    excel.Visible = true
-    doc_list.each do |f| 
-      begin
-        workbooks.Open(@@Home_Dir + f, true)
-      rescue
-        puts "Cannot open workbook:", @@Home_Dir + f
-      end
-    end
-    excel.Windows.Arrange(7)
-  end
-end
-
-]]></programlisting>
-
-<para>
-This rake file lists all the files that I need to open and all the applications required for the talk.
-</para>
-EOF
-    seed = <<EOF
-<para>
-Here's an example that I use all the time.
-</para>
-
-<!-- code file="/Users/nealford/dev/ruby/writeright/test/test_docs/code/daily_logs.rb" lang="ruby" -->
-
-<para>
-This rake file lists all the files that I need to open and all the applications required for the talk.
-</para>
-EOF
+    expected = IO.readlines("#{TEST_DOCS}/02_simple_code_file_no_parts_expected.xml").join
+    seed = IO.readlines("#{TEST_DOCS}/02_simple_code_file_no_parts_seed.xml").join
     assert_equal expected, @ch.process_lines_from(seed)
   end
 end

@@ -1,11 +1,14 @@
 =begin rdoc
-
+Todo:
+  Decorators for build_output_based_on metadata
+  remove part markers from code
+  harvest parts
+  callouts!
 =end
 
 require File.dirname(__FILE__) +  "/code_metadata"
 
 class CodeHarvest
-  ESCAPES = { '<' => '&lt;', '>' => '&gt;', '&' => '&amp;'}
   REGEX_IS_CODE = /\s*<!--\s*code\s+file\s*=.*/
   REGEX_PARTS = /.*part\s*=.*/
   CODE_POSTLUDE = "</programlisting>\n"
@@ -27,12 +30,6 @@ class CodeHarvest
   end
 
 private
-
-  def filter_escapes line
-    line_with_escaped_characters = ""
-    line.scan(/./) { |c| line_with_escaped_characters << (ESCAPES.has_key?(c) ? ESCAPES[c] : c) }
-    line_with_escaped_characters
-  end
 
   def code_prelude_for(language)
     "<programlisting language=\"#{language}\">"
