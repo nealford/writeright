@@ -1,0 +1,11 @@
+<para>
+Here's
+</para>
+
+<programlisting language="ruby">
+    excel = WIN32OLE.new("excel.application")
+</programlisting>
+
+<para>
+This
+</para>
