@@ -1,7 +1,7 @@
 =begin rdoc
 Todo:
   Decorators for build_output_based_on metadata
-  remove part markers from code
+X remove part markers from code
   harvest parts
   callouts!
 =end
