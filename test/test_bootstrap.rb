@@ -1,6 +1,6 @@
 require "test/unit"
 
-require "../src/bootstrap" 
+require "../lib/bootstrap" 
 require "fileutils" 
 require 'rubygems'
 require 'dust'
