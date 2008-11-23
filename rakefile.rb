@@ -5,13 +5,15 @@
 # You must have XMLLine installed on your machine for the validation stuff to work
 
 require 'rake'
-require 'credentials'
-require 'bootstrap.rb'
-SVN = "svn --username #{USERNAME} --password #{PASSWORD} "
+#require 'credentials'
+require 'lib/bootstrap.rb'
+#SVN = "svn --username #{USERNAME} --password #{PASSWORD} "
 SVN_GET_RECENT_CHANGED_FILES = "svn stat | grep xml | sed 's/M[ ]*//'"
 
-task :tests
-  system "ruby test_*.rb"
+task :default => [:tests]
+
+task :tests do
+  system "testrb test/*"
 end
 
 

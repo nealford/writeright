@@ -1,10 +1,10 @@
 require "test/unit"
 
-require "../lib/bootstrap" 
 require "fileutils" 
 require 'rubygems'
 require 'dust'
 require 'mocha'
+require File.dirname(__FILE__) + "/../lib/bootstrap" 
 
 class FakeStdOut
   attr_reader :output

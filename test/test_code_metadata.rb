@@ -1,6 +1,6 @@
 require "test/unit"
 
-require File.dirname(__FILE__) + "/.." + "/src/code_metadata"
+require File.dirname(__FILE__) + "/.." + "/lib/code_metadata"
 require 'rubygems'
 
 class TestCodeMetadata < Test::Unit::TestCase

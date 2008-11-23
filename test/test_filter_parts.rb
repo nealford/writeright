@@ -1,5 +1,5 @@
 require 'test/unit'
-require  File.dirname(__FILE__) + "/.." + "/src/filter_parts"
+require  File.dirname(__FILE__) + "/.." + "/lib/filter_parts"
 
 class TestFilterParts < Test::Unit::TestCase
 

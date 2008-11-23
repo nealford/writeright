@@ -1,5 +1,5 @@
 require 'test/unit'
-require  File.dirname(__FILE__) + "/.." + "/src/filter_escapes"
+require  File.dirname(__FILE__) + "/.." + "/lib/filter_escapes"
 
 class TestEscapeFilter < Test::Unit::TestCase
   def test_escape_filtering

@@ -1,6 +1,6 @@
 require "test/unit"
 
-require File.dirname(__FILE__) + "/.." + "/src/code_harvest"
+require File.dirname(__FILE__) + "/.." + "/lib/code_harvest"
 require 'rubygems'
 
 
