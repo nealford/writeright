@@ -30,7 +30,6 @@ class TestCodeMetadata < Test::Unit::TestCase
      "<!--code file=\"daily_logs.rb\" lang=\"ruby\" part=\"begin\"-->",
      "<!--     code      file = \"daily_logs.rb\"    lang = \"ruby\"        part = \"begin\" -->"].each do |l|
       cm = CodeMetadata.new(l)
-      assert cm.success
       assert_equal "daily_logs.rb", cm.file_name
       assert_equal "ruby", cm.lang
       assert_equal  "begin", cm.part
@@ -50,7 +49,6 @@ class TestCodeMetadata < Test::Unit::TestCase
   def test_regex_for_parsing_out_code_chunks_for_just_a_file
     CODE_FORMAT_WITH_JUST_FILE_AND_LANG.each do |l|
       cm = CodeMetadata.new(l)
-      assert cm.success
       assert_equal "daily_logs.rb", cm.file_name
       assert_equal "ruby", cm.lang
     end

@@ -3,7 +3,6 @@ Here's an example that I use all the time.
 </para>
 
 <!-- code file="/Users/nealford/dev/ruby/writeright/test/test_docs/code/daily_logs.rb" lang="ruby" -->
-
 <para>
 This rake file lists all the files that I need to open and all the applications required for the talk.
 </para>

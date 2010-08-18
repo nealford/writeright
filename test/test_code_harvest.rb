@@ -18,7 +18,7 @@ class TestCodeHarvest < Test::Unit::TestCase
     ["<!-- code file=\"foo.java\" lang=\"java\" -->",
      "<!--code  file=\"foo.java\" lang=\"java\" sect=\"beging\" -->",
      "<!--        code     file=-->"].each do |l|
-      assert @ch.is_code_line?(l)
+      assert @ch.is_code?(l)
     end
   end
 
@@ -27,7 +27,7 @@ class TestCodeHarvest < Test::Unit::TestCase
      "<!-- check the code for correctnesss -->",
      "<!-- code is broken here -->",
      "<!-- code in file sucks"].each do |l|
-      assert ! @ch.is_code_line?(l)
+      assert ! @ch.is_code?(l)
     end
   end
 

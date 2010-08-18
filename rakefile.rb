@@ -2,7 +2,7 @@
 # 'credentials.rb' contains the constants USERNAME, which is your Subversion longin name, and PASSWORD, which is you Subversion password
 # run bootstrap to create directory structure
 # start writing chapters in current
-# You must have XMLLine installed on your machine for the validation stuff to work
+# You must have XMLLint installed on your machine for the validation stuff to work
 
 require 'rake'
 #require 'credentials'
