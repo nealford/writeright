@@ -12,7 +12,7 @@ class DailyLogs
   #end: list of docs
 
   def open_daily_logs
-    # BEGIN: win32
+    # begin: win32
    excel = WIN32OLE.new("excel.application")
     #end:           win32
         

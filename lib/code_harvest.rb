@@ -12,6 +12,7 @@ class CodeHarvest
   REGEX_IS_CODE = /code\s+file\s*=.*/
   REGEX_PARTS = /.*part\s*=.*/
   CODE_POSTLUDE = "</programlisting>\n"
+  ESCAPES = { '<' => '&lt;', '>' => '&gt;', '&' => '&amp;'}
 
   def is_code? line
     polished(line) =~ REGEX_IS_CODE
@@ -34,13 +35,32 @@ private
     return line unless is_code? line
     metadata = CodeMetadata.new(line)
     output = []
-    output << code_prelude_for(metadata.lang) + (metadata.has_parts? ? "" : "<![CDATA[")
+    output << code_prelude_for(metadata.lang) + "<![CDATA[\n"
+    found_part = false
     IO.readlines(metadata.file_name).each do |source_line|
-      output << (metadata.has_parts? ? filter_escapes(source_line) + "\n" : source_line)
+      if (metadata.has_parts?)
+        if (source_line =~ /.*#.?end:.*#{metadata.part}.*/)
+          found_part = false
+        end
+        if found_part
+          output << filter_escapes(source_line) + "\n"
+        end
+        if (source_line =~ /.*#.?begin:.?#{metadata.part}.*/)
+          found_part = true
+        end
+      else
+        output << filter_escapes(source_line) + "\n"
+      end
     end
-    output << "]]>" unless metadata.has_parts?
+    output << "]]>"
     output << CODE_POSTLUDE
     output.join
+  end
+  
+  def filter_escapes source_line
+    out = ""
+    source_line.scan(/./) { |c| out << (ESCAPES.has_key?(c) ? ESCAPES[c] : c) }
+    out
   end
   
 end

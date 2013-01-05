@@ -2,15 +2,16 @@
 Here's an example that I use all the time.
 </para>
 
-<programlisting language="ruby"><![CDATA[class DailyLogs
+<programlisting language="ruby"><![CDATA[
+class DailyLogs
     private 
     @@Home_Dir = "c:/MyDocuments/Documents/"
     
   def doc_list
     docs = Array.new
-    docs << "Sisyphus Project Planner.xls"
-    docs << "TimeLog.xls"
-    docs << "NFR.xls"
+    docs &lt;&lt; "Sisyphus Project Planner.xls"
+    docs &lt;&lt; "TimeLog.xls"
+    docs &lt;&lt; "NFR.xls"
   end
 
   def open_daily_logs
